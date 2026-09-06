@@ -4,19 +4,23 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30"/>
 
     <application
         android:theme="@style/AppTheme"
         android:label="Boos"
         android:allowBackup="false"
         android:supportsRtl="true"
-        android:icon="@android:drawable/ic_menu_compass">
+        android:icon="@android:drawable/ic_menu_compass"
+        android:requestLegacyExternalStorage="true">
 
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
