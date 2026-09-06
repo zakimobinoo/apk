@@ -11,12 +11,10 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.GridLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -43,11 +41,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Boos Magnetic Scanner — v2.2
- * - All UI text in English
- * - Custom scan name for each project
- * - Stronger Bluetooth connection (3 methods)
- * - No "S" command — just listens for numbers from device
+ * Boos Magnetic Scanner — v2.3
+ * English UI, no name field, grid colors as you scan (like before)
  */
 public class MainActivity extends Activity {
 
@@ -63,7 +58,6 @@ public class MainActivity extends Activity {
 
     Spinner devices;
     Button btnConnect, btnStart, btnUndo, btnSave, btnRefresh;
-    EditText scanName;
     TextView status, value, cell, hint;
     GridLayout grid;
     double[] data = new double[POINTS];
@@ -81,48 +75,20 @@ public class MainActivity extends Activity {
         refreshDeviceList();
     }
 
-    // ───────────────────────── UI ─────────────────────────
-
     LinearLayout buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(12), dp(10), dp(12), dp(10));
+        root.setPadding(dp(12), dp(8), dp(12), dp(8));
         root.setBackgroundColor(Color.parseColor("#F5F7FA"));
 
         TextView title = makeText("Boos Magnetic Scanner", 22, true);
         title.setTextColor(Color.parseColor("#1565C0"));
-        root.addView(title, lp(-1, dp(40)));
+        root.addView(title, lp(-1, dp(36)));
 
         status = makeText("Bluetooth: ready", 14, false);
         status.setTextColor(Color.parseColor("#37474F"));
-        root.addView(status, lp(-1, dp(28)));
+        root.addView(status, lp(-1, dp(26)));
 
-        // Scan name row
-        LinearLayout nameRow = new LinearLayout(this);
-        nameRow.setOrientation(LinearLayout.HORIZONTAL);
-        nameRow.setGravity(Gravity.CENTER_VERTICAL);
-        nameRow.setPadding(0, dp(4), 0, dp(4));
-
-        TextView nameLabel = makeText("Name:", 14, true);
-        nameLabel.setTextColor(Color.parseColor("#37474F"));
-        nameLabel.setPadding(0, 0, dp(8), 0);
-        nameRow.addView(nameLabel, lp(dp(56), dp(44)));
-
-        scanName = new EditText(this);
-        scanName.setHint("e.g. North Field / Area A");
-        scanName.setText("Scan_1");
-        scanName.setSingleLine(true);
-        scanName.setInputType(InputType.TYPE_CLASS_TEXT);
-        scanName.setTextSize(14);
-        scanName.setPadding(dp(10), dp(8), dp(10), dp(8));
-        scanName.setBackground(roundedBg(Color.WHITE, 8));
-        scanName.setTextColor(Color.parseColor("#212121"));
-        scanName.setHintTextColor(Color.parseColor("#90A4AE"));
-        nameRow.addView(scanName, new LinearLayout.LayoutParams(0, dp(44), 1f));
-
-        root.addView(nameRow, lp(-1, dp(52)));
-
-        // Device select + refresh + connect
         LinearLayout row1 = new LinearLayout(this);
         row1.setOrientation(LinearLayout.HORIZONTAL);
         row1.setGravity(Gravity.CENTER_VERTICAL);
@@ -139,38 +105,37 @@ public class MainActivity extends Activity {
         btnConnect.setOnClickListener(v -> connect());
         row1.addView(btnConnect, lp(dp(110), dp(48)));
 
-        root.addView(row1, lp(-1, dp(56)));
+        root.addView(row1, lp(-1, dp(54)));
 
-        // Control buttons
         LinearLayout row2 = new LinearLayout(this);
         row2.setOrientation(LinearLayout.HORIZONTAL);
-        row2.setPadding(0, dp(6), 0, dp(6));
+        row2.setPadding(0, dp(4), 0, dp(4));
 
         btnStart = makeButton("START SCAN", Color.parseColor("#2E7D32"));
         btnStart.setOnClickListener(v -> toggleScan());
-        row2.addView(btnStart, new LinearLayout.LayoutParams(0, dp(52), 1.2f));
+        row2.addView(btnStart, new LinearLayout.LayoutParams(0, dp(50), 1.2f));
 
         btnUndo = makeButton("UNDO", Color.parseColor("#F57C00"));
         btnUndo.setOnClickListener(v -> undo());
-        row2.addView(btnUndo, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        row2.addView(btnUndo, new LinearLayout.LayoutParams(0, dp(50), 1f));
 
         btnSave = makeButton("SAVE V3D", Color.parseColor("#6A1B9A"));
         btnSave.setOnClickListener(v -> saveV3D());
-        row2.addView(btnSave, new LinearLayout.LayoutParams(0, dp(52), 1.2f));
+        row2.addView(btnSave, new LinearLayout.LayoutParams(0, dp(50), 1.2f));
 
-        root.addView(row2, lp(-1, dp(64)));
+        root.addView(row2, lp(-1, dp(58)));
 
         value = makeText("Value: —", 20, true);
         value.setTextColor(Color.parseColor("#212121"));
-        root.addView(value, lp(-1, dp(36)));
+        root.addView(value, lp(-1, dp(34)));
 
         cell = makeText("Point: 0 / 120", 15, false);
         cell.setTextColor(Color.parseColor("#546E7A"));
-        root.addView(cell, lp(-1, dp(28)));
+        root.addView(cell, lp(-1, dp(26)));
 
         hint = makeText("1) Select device  2) CONNECT  3) START SCAN  4) Press device button", 12, false);
         hint.setTextColor(Color.parseColor("#78909C"));
-        root.addView(hint, lp(-1, dp(36)));
+        root.addView(hint, lp(-1, dp(32)));
 
         ScrollView sc = new ScrollView(this);
         grid = new GridLayout(this);
@@ -178,7 +143,7 @@ public class MainActivity extends Activity {
         grid.setRowCount(ROWS);
         for (int i = 0; i < POINTS; i++) {
             View box = new View(this);
-            box.setBackground(roundedBg(Color.LTGRAY, 4));
+            box.setBackgroundColor(Color.LTGRAY);
             GridLayout.LayoutParams p = new GridLayout.LayoutParams();
             p.width = 0;
             p.height = dp(36);
@@ -229,8 +194,6 @@ public class MainActivity extends Activity {
     int dp(int v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }
-
-    // ───────────────────────── Bluetooth ─────────────────────────
 
     void requestBtPermissions() {
         if (Build.VERSION.SDK_INT >= 31) {
@@ -405,8 +368,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ───────────────────────── Scan logic ─────────────────────────
-
     void toggleScan() {
         if (socket == null || !socket.isConnected()) {
             toast("Connect to device first");
@@ -415,7 +376,7 @@ public class MainActivity extends Activity {
         if (!scanning) {
             index = 0;
             Arrays.fill(data, Double.NaN);
-            for (View box : boxes) box.setBackground(roundedBg(Color.LTGRAY, 4));
+            for (View box : boxes) box.setBackgroundColor(Color.LTGRAY);
             value.setText("Value: —");
             cell.setText("Point: 0 / 120");
             scanning = true;
@@ -448,7 +409,7 @@ public class MainActivity extends Activity {
         }
 
         data[index] = v;
-        boxes[index].setBackground(roundedBg(colorFor(v), 4));
+        boxes[index].setBackgroundColor(colorFor(v));
         cell.setText("Point: " + (index + 1) + " / 120");
         index++;
 
@@ -469,7 +430,7 @@ public class MainActivity extends Activity {
         }
         index--;
         data[index] = Double.NaN;
-        boxes[index].setBackground(roundedBg(Color.LTGRAY, 4));
+        boxes[index].setBackgroundColor(Color.LTGRAY);
         value.setText("Value: —");
         cell.setText("Point: " + index + " / 120");
         if (!scanning) {
@@ -488,18 +449,6 @@ public class MainActivity extends Activity {
         float t = (mx <= mn) ? 0.5f : (float) ((v - mn) / (mx - mn));
         t = Math.max(0f, Math.min(1f, t));
         return Color.HSVToColor(new float[]{240f - 240f * t, 0.85f, 0.95f});
-    }
-
-    // ───────────────────────── Save V3D ─────────────────────────
-
-    String sanitizeName(String raw) {
-        if (raw == null) return "Scan";
-        String s = raw.trim();
-        if (s.isEmpty()) return "Scan";
-        s = s.replaceAll("[\\\\/:*?\"<>|]", "_");
-        s = s.replaceAll("\\s+", "_");
-        if (s.length() > 40) s = s.substring(0, 40);
-        return s;
     }
 
     void saveV3D() {
@@ -532,11 +481,8 @@ public class MainActivity extends Activity {
 
             File dir = new File(getExternalFilesDir(null), "Boos");
             if (!dir.exists()) dir.mkdirs();
-
-            String name = sanitizeName(scanName.getText().toString());
             String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-            File f = new File(dir, name + "_" + stamp + ".v3d");
-
+            File f = new File(dir, "Boos_" + stamp + ".v3d");
             try (FileOutputStream fos = new FileOutputStream(f)) {
                 fos.write(file);
             }
